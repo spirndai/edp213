@@ -33,13 +33,14 @@ int Paint_width;
 int Paint_height;
 int Paint_rotate;
 
-void Paint_init(int size)
+void Paint_init(unsigned char* buf)
 {
     Paint_rotate = ROTATE_0;
-    Paint_image = malloc(size);
+    Paint_image = buf;
     /* 1 byte = 8 pixels, so the width should be the multiple of 8 */
     Paint_width = 0;
     Paint_height = 0;
+
 }
 
 /**

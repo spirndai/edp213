@@ -48,36 +48,54 @@ void sendbyte(int sdbyte)
     epdcklow;
     epdcshigh;
 }
+void InitGpio(void)
+{
+  rfcslow;
+  rfcklow;
+  rfdalow;
+  spiromcslow;
+  epdunknowhigh;
+  epdbslow ;
+  epdon;
+  rfoff;
+  P1DIR = BIT2 | BIT3 | BIT4 | BIT6 | BIT7 ;
+  P2DIR = BIT3 | BIT4 | BIT5 | BIT6 | BIT7 ;
+  P3DIR = BIT0 | BIT1 | BIT4 | BIT5 | BIT6 | BIT7 | BIT3;
+  P1SEL = 0X0;
+  P1SEL2 = 0X0;
+  P2SEL = 0X0;
+  P2SEL2 = 0X0;
+  P3SEL = 0X0;
+  P3SEL2 = 0X0;
+  Delay(200);
+  epdrsthigh;
+  Delay(200);
+  epdrstlow;
+  Delay(200);
+  epdrsthigh;
+
+}
+
+void InitClk(void)
+{
+  DCOCTL = 0x0000;
+  BCSCTL1 = CALBC1_8MHZ;                    // Set range
+  DCOCTL = CALDCO_8MHZ;
+
+  BCSCTL3 |= LFXT1S_2;                   /* Mode 2 for LFXT1 : VLO */
+  IFG1 &= !(OFIFG);
+  Delay(512);
+  BCSCTL1 |= DIVA_3 ;                     /* ACLK Divider 3: /8 */
+}
 
 const unsigned char *this_lut;
 int this_width = 128;
 int this_height = 250 ;
 int Edp_Init(const unsigned char *lut)
 {
-    /* this calls the peripheral hardware interface, see epdif */
-    rfcslow;
-    rfcklow;
-    rfdalow;
-    spiromcslow;
-    epdunknowhigh;
-    epdbslow;
-    epdon;
-    rfoff;
-    P1DIR = BIT2 | BIT3 | BIT4 | BIT6 | BIT7;
-    P2DIR = BIT3 | BIT4 | BIT5 | BIT6 | BIT7;
-    P3DIR = BIT0 | BIT1 | BIT4 | BIT5 | BIT6 | BIT7 | BIT3;
-    P1SEL = 0X0;
-    P1SEL2 = 0X0;
-    P2SEL = 0X0;
-    P2SEL2 = 0X0;
-    P3SEL = 0X0;
-    P3SEL2 = 0X0;
-    Delaylong(3);
-    epdrsthigh;
-    Delaylong(3);
-    epdrstlow;
-    Delaylong(3);
-    epdrsthigh;
+    InitGpio();
+    InitClk();
+
 
     /* EPD hardware init start */
     this_lut = lut;

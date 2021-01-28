@@ -31,83 +31,48 @@
 
 #define COLORED     0
 #define UNCOLORED   1
-
-unsigned long time_now_s;
-
+unsigned char imgbuf[384];
+unsigned long time_now_s = 0;
+#define TIMER_PERIOD (10680)
+void showback()
+{
+    Edp_Init(lut_full_update);
+    Edp_SetFrameMemory(IMAGE_DATA);
+    Edp_DisplayFrame();
+    Delaylong(5);
+}
 int main(void)
 {
-    // put your setup code here, to run once:
+    int isback = 0;
+    // Stop watchdog timer to prevent time out reset
+    WDTCTL = WDTPW + WDTHOLD;
+    Paint_init(imgbuf);
 
-    Paint_init(1024);
-    if (Edp_Init(lut_full_update) != 0)
-    {
-        return 1;
-    }
+    // reset timer A config (not strictly needed)
+    TACTL = TACLR;
 
-    Edp_ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-    Paint_SetRotate(ROTATE_0);
-    Paint_SetWidth(128);    // width should be the multiple of 8
-    Paint_SetHeight(24);
-    Paint_Clear(COLORED);
-    Paint_DrawStringAt(30, 4, "Hello world!", &Font8, UNCOLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 0, 10, Paint_GetWidth(),
-                            Paint_GetHeight());
+    // ACLK as clock source, divider 8, continuous mode, interrupt enabled
+    TACTL = TASSEL_1 | ID_3 | MC_2 | TAIE;
 
-    Paint_Clear(UNCOLORED);
-    Paint_DrawStringAt(30, 4, "e-Paper Demo", &Font8, COLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 0, 30, Paint_GetWidth(),
-                            Paint_GetHeight());
+    // set the period
+    TACCR1 = TIMER_PERIOD;
 
-    Paint_SetWidth(64);
-    Paint_SetHeight(64);
-
-    Paint_Clear(UNCOLORED);
-    Paint_DrawRectangle(0, 0, 40, 50, COLORED);
-    Paint_DrawLine(0, 0, 40, 50, COLORED);
-    Paint_DrawLine(40, 0, 0, 50, COLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 16, 60, Paint_GetWidth(),
-                            Paint_GetHeight());
-
-    Paint_Clear(UNCOLORED);
-    Paint_DrawCircle(32, 32, 30, COLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 72, 60, Paint_GetWidth(),
-                            Paint_GetHeight());
-
-    Paint_Clear(UNCOLORED);
-    Paint_DrawFilledRectangle(0, 0, 40, 50, COLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 16, 130, Paint_GetWidth(),
-                            Paint_GetHeight());
-
-    Paint_Clear(UNCOLORED);
-    Paint_DrawFilledCircle(32, 32, 30, COLORED);
-    Edp_SetFrameMemory_Part(Paint_GetImage(), 72, 130, Paint_GetWidth(),
-                            Paint_GetHeight());
-    Edp_DisplayFrame();
-
-    Delay(2000);
-
-    if (Edp_Init(lut_partial_update) != 0)
-    {
-        // Serial.print("e-Paper init failed");
-        return 1;
-    }
-
-    /**
-     *  there are 2 memory areas embedded in the e-paper display
-     *  and once the display is refreshed, the memory area will be auto-toggled,
-     *  i.e. the next action of SetFrameMemory will set the other memory area
-     *  therefore you have to set the frame memory and refresh the display twice.
-     */
-
-    Edp_SetFrameMemory(IMAGE_DATA);
-    Edp_DisplayFrame();
-    Edp_SetFrameMemory(IMAGE_DATA);
-    Edp_DisplayFrame();
+    // enable capture/compare interrupts for CCR1
+    TACCTL1 = CCIE;
+    _enable_interrupts();
 
     while (1)
     {
-        // put your main code here, to run repeatedly:
-        time_now_s = 0;
+
+        if (time_now_s % 5 == 0 && isback == 0)
+        {
+            showback();
+            Edp_Init(lut_partial_update);
+            isback = 1;
+        }
+        if (time_now_s % 5 != 0)
+            isback = 0;
+
         char time_string[] = { '0', '0', ':', '0', '0', '\0' };
         time_string[0] = time_now_s / 60 / 10 + '0';
         time_string[1] = time_now_s / 60 % 10 + '0';
@@ -117,11 +82,25 @@ int main(void)
         Paint_SetHeight(96);
         Paint_SetRotate(ROTATE_90);
         Paint_Clear(UNCOLORED);
-        Paint_DrawStringAt(0, 4, time_string, &Font8, COLORED);
+        Paint_DrawStringAt(0, 4, time_string, &Font24, COLORED);
         Edp_SetFrameMemory_Part(Paint_GetImage(), 80, 72, Paint_GetWidth(),
                                 Paint_GetHeight());
         Edp_DisplayFrame();
-
-        Delay(500);
+        Delay(1000);
     }
+
+}
+#pragma vector=TIMER0_A1_VECTOR
+
+__interrupt void Timer_A(void)
+{
+    switch (TAIV)
+    {
+    case 0x02:
+        time_now_s++;
+        // set the time of the next interrupt
+        TACCR1 += TIMER_PERIOD;
+        break;
+    }
+
 }

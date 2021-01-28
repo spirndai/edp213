@@ -38,7 +38,7 @@
 
 #include "fonts.h"
 
-void Paint_init(int size);
+void Paint_init(unsigned char* buf);
 void Paint_Clear(int colored);
 int Paint_GetWidth(void);
 void Paint_SetWidth(int width);

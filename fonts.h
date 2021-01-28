@@ -54,7 +54,7 @@ struct sFONT {
 } ;
 
 
-extern struct sFONT Font8;
+extern struct sFONT Font24;
 
 #endif /* __FONTS_H */
  
