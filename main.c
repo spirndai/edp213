@@ -24,68 +24,104 @@
  * THE SOFTWARE.
  */
 
-
 #include "epd2in13.h"
+#include "epdPaint.h"
 #include "common.h"
+#include "imagedata.h"
 
 #define COLORED     0
 #define UNCOLORED   1
 
-
-
-
-
 unsigned long time_now_s;
 
+int main(void)
+{
+    // put your setup code here, to run once:
 
+    Paint_init(1024);
+    if (Edp_Init(lut_full_update) != 0)
+    {
+        return 1;
+    }
 
-int main(void) {
-  // put your setup code here, to run once:
+    Edp_ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+    Paint_SetRotate(ROTATE_0);
+    Paint_SetWidth(128);    // width should be the multiple of 8
+    Paint_SetHeight(24);
+    Paint_Clear(COLORED);
+    Paint_DrawStringAt(30, 4, "Hello world!", &Font8, UNCOLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 0, 10, Paint_GetWidth(),
+                            Paint_GetHeight());
 
-  if (Edp_Init(lut_full_update) != 0) {
+    Paint_Clear(UNCOLORED);
+    Paint_DrawStringAt(30, 4, "e-Paper Demo", &Font8, COLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 0, 30, Paint_GetWidth(),
+                            Paint_GetHeight());
 
-      return 1;
-  }
+    Paint_SetWidth(64);
+    Paint_SetHeight(64);
 
-  Edp_ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+    Paint_Clear(UNCOLORED);
+    Paint_DrawRectangle(0, 0, 40, 50, COLORED);
+    Paint_DrawLine(0, 0, 40, 50, COLORED);
+    Paint_DrawLine(40, 0, 0, 50, COLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 16, 60, Paint_GetWidth(),
+                            Paint_GetHeight());
 
-  //Edp_SetFrameMemory_Part(paint.GetImage(), 72, 130, paint.GetWidth(), paint.GetHeight());
-  Edp_DisplayFrame();
+    Paint_Clear(UNCOLORED);
+    Paint_DrawCircle(32, 32, 30, COLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 72, 60, Paint_GetWidth(),
+                            Paint_GetHeight());
 
-  Delay(2000);
+    Paint_Clear(UNCOLORED);
+    Paint_DrawFilledRectangle(0, 0, 40, 50, COLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 16, 130, Paint_GetWidth(),
+                            Paint_GetHeight());
 
-  if (Edp_Init(lut_partial_update) != 0) {
-     // Serial.print("e-Paper init failed");
-      return 1;
-  }
+    Paint_Clear(UNCOLORED);
+    Paint_DrawFilledCircle(32, 32, 30, COLORED);
+    Edp_SetFrameMemory_Part(Paint_GetImage(), 72, 130, Paint_GetWidth(),
+                            Paint_GetHeight());
+    Edp_DisplayFrame();
 
-  /**
-   *  there are 2 memory areas embedded in the e-paper display
-   *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetFrameMemory will set the other memory area
-   *  therefore you have to set the frame memory and refresh the display twice.
-   */
+    Delay(2000);
 
-//  Edp_SetFrameMemory(IMAGE_DATA);
-  Edp_DisplayFrame();
-//  Edp_SetFrameMemory(IMAGE_DATA);
-  Edp_DisplayFrame();
+    if (Edp_Init(lut_partial_update) != 0)
+    {
+        // Serial.print("e-Paper init failed");
+        return 1;
+    }
 
+    /**
+     *  there are 2 memory areas embedded in the e-paper display
+     *  and once the display is refreshed, the memory area will be auto-toggled,
+     *  i.e. the next action of SetFrameMemory will set the other memory area
+     *  therefore you have to set the frame memory and refresh the display twice.
+     */
 
+    Edp_SetFrameMemory(IMAGE_DATA);
+    Edp_DisplayFrame();
+    Edp_SetFrameMemory(IMAGE_DATA);
+    Edp_DisplayFrame();
 
-while (1){
-  // put your main code here, to run repeatedly:
-  time_now_s =0 ;
-  char time_string[] = {'0', '0', ':', '0', '0', '\0'};
-  time_string[0] = time_now_s / 60 / 10 + '0';
-  time_string[1] = time_now_s / 60 % 10 + '0';
-  time_string[3] = time_now_s % 60 / 10 + '0';
-  time_string[4] = time_now_s % 60 % 10 + '0';
+    while (1)
+    {
+        // put your main code here, to run repeatedly:
+        time_now_s = 0;
+        char time_string[] = { '0', '0', ':', '0', '0', '\0' };
+        time_string[0] = time_now_s / 60 / 10 + '0';
+        time_string[1] = time_now_s / 60 % 10 + '0';
+        time_string[3] = time_now_s % 60 / 10 + '0';
+        time_string[4] = time_now_s % 60 % 10 + '0';
+        Paint_SetWidth(32);
+        Paint_SetHeight(96);
+        Paint_SetRotate(ROTATE_90);
+        Paint_Clear(UNCOLORED);
+        Paint_DrawStringAt(0, 4, time_string, &Font8, COLORED);
+        Edp_SetFrameMemory_Part(Paint_GetImage(), 80, 72, Paint_GetWidth(),
+                                Paint_GetHeight());
+        Edp_DisplayFrame();
 
-
-//  Edp_SetFrameMemory_Part(paint.GetImage(), 80, 72, paint.GetWidth(), paint.GetHeight());
-  Edp_DisplayFrame();
-
-  Delay(500);
-}
+        Delay(500);
+    }
 }
