@@ -86,7 +86,10 @@ int main(void)
         Edp_SetFrameMemory_Part(Paint_GetImage(), 80, 72, Paint_GetWidth(),
                                 Paint_GetHeight());
         Edp_DisplayFrame();
-        Delay(1000);
+        Edp_Sleep();
+        __low_power_mode_3();
+        Edp_Reset();
+
     }
 
 }
@@ -100,6 +103,7 @@ __interrupt void Timer_A(void)
         time_now_s++;
         // set the time of the next interrupt
         TACCR1 += TIMER_PERIOD;
+        __low_power_mode_off_on_exit();
         break;
     }
 
